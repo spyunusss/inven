@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Barang</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div id="loginModal" class="modal" style="display:block;">
+        <div class="modal-content">
+            <h2>Login</h2>
+            <select id="loginRole">
+                <option>Admin</option>
+                <option>Kasir</option>
+                <option>Petugas Gudang</option>
+            </select>
+            <input type="password" id="loginPassword" placeholder="Password (default: 123)" required>
+            <button onclick="login()">Login</button>
+        </div>
+    </div>
+    <div class="container" id="mainContainer" style="display:none;">
+        <nav class="sidebar">
+            <h2>Inventory</h2>
+            <button onclick="toggleTheme()">Mode Gelap</button>
+            <ul>
+                <li><a href="#" onclick="showPage('dashboard')"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#" onclick="showPage('barang')"><i class="fas fa-box"></i> Data Barang</a></li>
+                <li><a href="#" onclick="showPage('kategori')"><i class="fas fa-tags"></i> Kategori Barang</a></li>
+                <li><a href="#" onclick="showPage('masuk')"><i class="fas fa-arrow-down"></i> Barang Masuk</a></li>
+                <li><a href="#" onclick="showPage('keluar')"><i class="fas fa-arrow-up"></i> Barang Keluar</a></li>
+                <li><a href="#" onclick="showPage('supplier')"><i class="fas fa-truck"></i> Supplier</a></li>
+                <li><a href="#" onclick="showPage('user')"><i class="fas fa-users"></i> User/Pengguna</a></li>
+                <li><a href="#" onclick="showPage('laporan')"><i class="fas fa-chart-bar"></i> Laporan</a></li>
+                <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+        <main class="content">
+            <div id="dashboard" class="page active">
+                <h1>Dashboard</h1>
+                <div class="summary">
+                    <div class="card"><h3>Total Barang</h3><p id="totalBarang">0</p></div>
+                    <div class="card"><h3>Total Stok</h3><p id="totalStok">0</p></div>
+                    <div class="card"><h3>Nilai Inventory</h3><p id="nilaiInventory">Rp 0</p></div>
+                </div>
+                <div id="stokAlert" class="alert" style="display:none;">Peringatan: Stok rendah! <button onclick="sendEmailAlert()">Kirim Email</button></div>
+                <canvas id="stokChart" width="400" height="200"></canvas>
+                <button onclick="backupData()">Backup Data</button>
+                <input type="file" id="restoreFile" accept=".json" onchange="restoreData()">
+                <button onclick="document.getElementById('restoreFile').click()">Restore Data</button>
+            </div>
+            <div id="barang" class="page">
+                <h1>Data Barang</h1>
+                <input type="text" id="searchBarang" placeholder="Cari Barang..." onkeyup="filterBarang()">
+                <select id="filterKategori" onchange="filterBarang()"><option value="">Semua Kategori</option></select>
+                <button onclick="showForm('barang')">Tambah Barang</button>
+                <button onclick="exportCSV('barang')">Export CSV</button>
+                <table id="barangTable">
+                    <thead><tr><th>Nama</th><th>Kategori</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="kategori" class="page">
+                <h1>Kategori Barang</h1>
+                <input type="text" id="searchKategori" placeholder="Cari Kategori..." onkeyup="filterKategori()">
+                <button onclick="showForm('kategori')">Tambah Kategori</button>
+                <button onclick="exportCSV('kategori')">Export CSV</button>
+                <ul id="kategoriList"></ul>
+            </div>
+            <div id="masuk" class="page">
+                <h1>Barang Masuk</h1>
+                <button onclick="showForm('masuk')">Catat Barang Masuk</button>
+                <button onclick="exportCSV('masuk')">Export CSV</button>
+                <table id="masukTable">
+                    <thead><tr><th>Barang</th><th>Jumlah</th><th>Supplier</th><th>Tanggal</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="keluar" class="page">
+                <h1>Barang Keluar</h1>
+                <button onclick="showForm('keluar')">Catat Barang Keluar</button>
+                <button onclick="exportCSV('keluar')">Export CSV</button>
+                <table id="keluarTable">
+                    <thead><tr><th>Barang</th><th>Jumlah</th><th>Tanggal</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="supplier" class="page">
+                <h1>Supplier</h1>
+                <input type="text" id="searchSupplier" placeholder="Cari Supplier..." onkeyup="filterSupplier()">
+                <button onclick="showForm('supplier')">Tambah Supplier</button>
+                <button onclick="exportCSV('supplier')">Export CSV</button>
+                <table id="supplierTable">
+                    <thead><tr><th>Nama</th><th>Kontak</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="user" class="page">
+                <h1>User/Pengguna</h1>
+                <input type="text" id="searchUser" placeholder="Cari User..." onkeyup="filterUser()">
+                <button onclick="showForm('user')">Tambah User</button>
+                <button onclick="exportCSV('user')">Export CSV</button>
+                <table id="userTable">
+                    <thead><tr><th>Nama</th><th>Role</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="laporan" class="page">
+                <h1>Laporan</h1>
+                <select id="laporanType">
+                    <option value="bulan">Per Bulan</option>
+                    <option value="stok">Stok Rendah</option>
+                    <option value="transaksi">Transaksi</option>
+                </select>
+                <button onclick="generateReport()">Generate</button>
+                <button onclick="exportPDF()">Export PDF</button>
+                <button onclick="printReport()">Print Laporan</button>
+                <div id="reportContent"></div>
+            </div>
+        </main>
+    </div>
+    <div id="formModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForm()">&times;</span>
+            <form id="dynamicForm"></form>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
