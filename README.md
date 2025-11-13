@@ -1,2 +1,2 @@
-inventory
+# inventory
 Project inventory
